@@ -363,12 +363,19 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
         st.error("Please save your Anthropic API key in User Settings before sending messages.")
         return
 
+    try:
+        encrypted_key = user["encrypted_api_key"]
+        api_key = sanitize_api_key(decrypt_api_key(encrypted_key, settings.encryption_master_key))
+    except ValueError:
+        st.error(
+            "Your saved API key appears to be invalid or was pasted with unsupported characters. "
+            "Please go to User Settings, delete it, and save the exact Anthropic key again."
+        )
+        return
+
     db.create_message(chat["id"], "user", user_input.strip())
     if not messages:
         db.update_chat_title(chat["id"], user["id"], user_input[:50].strip() or "New Chat")
-
-    encrypted_key = user["encrypted_api_key"]
-    api_key = sanitize_api_key(decrypt_api_key(encrypted_key, settings.encryption_master_key))
     history = db.list_recent_messages(chat["id"], limit=10)
 
     try:
