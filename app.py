@@ -14,6 +14,7 @@ from streamlit_src.security import (
     decrypt_api_key,
     encrypt_api_key,
     hash_password,
+    sanitize_api_key,
     verify_password,
 )
 
@@ -62,7 +63,8 @@ def sync_user_from_cookie() -> None:
         if user:
             st.session_state["user"] = user
     except jwt.PyJWTError:
-        cookie_manager.delete("session_token")
+        if cookie_manager.get("session_token"):
+            cookie_manager.delete("session_token")
 
 
 def login_user(user: dict[str, Any]) -> None:
@@ -73,10 +75,12 @@ def login_user(user: dict[str, Any]) -> None:
 
 
 def logout_user() -> None:
-    cookie_manager.delete("session_token")
+    if cookie_manager.get("session_token"):
+        cookie_manager.delete("session_token")
     st.session_state["user"] = None
     st.session_state["selected_project_id"] = None
     st.session_state["selected_chat_id"] = None
+    st.session_state["chat_error"] = None
     st.rerun()
 
 
@@ -290,10 +294,14 @@ def render_user_settings(user: dict[str, Any]) -> None:
         if not api_key.strip():
             st.error("Please enter a valid API key.")
         else:
-            encrypted = encrypt_api_key(api_key.strip(), settings.encryption_master_key)
-            db.update_user_api_key(user["id"], encrypted)
-            st.session_state["user"] = db.get_user_by_id(user["id"])
-            st.success("API key saved securely.")
+            try:
+                clean_api_key = sanitize_api_key(api_key)
+                encrypted = encrypt_api_key(clean_api_key, settings.encryption_master_key)
+                db.update_user_api_key(user["id"], encrypted)
+                st.session_state["user"] = db.get_user_by_id(user["id"])
+                st.success("API key saved securely.")
+            except ValueError as error:
+                st.error(str(error))
 
     if user.get("encrypted_api_key"):
         if st.button("Delete saved API key"):
@@ -360,7 +368,7 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
         db.update_chat_title(chat["id"], user["id"], user_input[:50].strip() or "New Chat")
 
     encrypted_key = user["encrypted_api_key"]
-    api_key = decrypt_api_key(encrypted_key, settings.encryption_master_key)
+    api_key = sanitize_api_key(decrypt_api_key(encrypted_key, settings.encryption_master_key))
     history = db.list_recent_messages(chat["id"], limit=10)
 
     try:

@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import base64
 import os
-from dataclasses import dataclass
+from typing import NamedTuple
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -27,8 +25,7 @@ def read_setting(name: str, default: str | None = None) -> str:
     return default
 
 
-@dataclass(frozen=True)
-class Settings:
+class Settings(NamedTuple):
     database_path: str
     jwt_secret: str
     encryption_master_key: str

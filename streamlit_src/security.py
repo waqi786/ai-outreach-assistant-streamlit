@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import os
+import unicodedata
 
 import bcrypt
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -27,11 +28,25 @@ def normalize_master_key(raw_key: str) -> bytes:
     return hashlib.sha256(raw_key.encode("utf-8")).digest()
 
 
+def sanitize_api_key(raw_key: str) -> str:
+    normalized = unicodedata.normalize("NFKC", raw_key)
+    compact = "".join(normalized.split())
+
+    try:
+        compact.encode("ascii")
+    except UnicodeEncodeError as error:
+        raise ValueError(
+            "API key contains unsupported non-ASCII characters. Please paste the exact Anthropic key again."
+        ) from error
+
+    return compact
+
+
 def encrypt_api_key(plain_text: str, master_key: str) -> str:
     key = normalize_master_key(master_key)
     nonce = os.urandom(12)
     aesgcm = AESGCM(key)
-    encrypted = aesgcm.encrypt(nonce, plain_text.encode("utf-8"), None)
+    encrypted = aesgcm.encrypt(nonce, sanitize_api_key(plain_text).encode("utf-8"), None)
     return base64.b64encode(nonce + encrypted).decode("utf-8")
 
 
