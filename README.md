@@ -112,7 +112,7 @@ Copy `.env.example` to `.env` and set your values.
 DATABASE_PATH=ai_outreach.db
 JWT_SECRET=change-this-before-deploy
 ENCRYPTION_MASTER_KEY=base64-encoded-32-byte-key
-ANTHROPIC_MODEL=claude-3-5-sonnet-20240620
+ANTHROPIC_MODEL=claude-sonnet-4-20250514
 ```
 
 To generate a key:
@@ -148,7 +148,7 @@ In app settings, add:
 ```toml
 JWT_SECRET = "change-this-before-deploy"
 ENCRYPTION_MASTER_KEY = "base64-encoded-32-byte-key"
-ANTHROPIC_MODEL = "claude-3-5-sonnet-20240620"
+ANTHROPIC_MODEL = "claude-sonnet-4-20250514"
 DATABASE_PATH = "ai_outreach.db"
 ```
 

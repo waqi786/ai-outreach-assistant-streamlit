@@ -36,6 +36,7 @@ def initialize_state() -> None:
     st.session_state.setdefault("user", None)
     st.session_state.setdefault("selected_project_id", None)
     st.session_state.setdefault("selected_chat_id", None)
+    st.session_state.setdefault("chat_error", None)
 
 
 def sign_session_token(user: dict[str, Any]) -> str:
@@ -337,6 +338,10 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
     if not messages:
         st.info("No messages yet. Start with context like lead type, audience, goal, and CTA.")
 
+    if st.session_state.get("chat_error"):
+        st.error(st.session_state["chat_error"])
+        st.session_state["chat_error"] = None
+
     for message in messages:
         role = "assistant" if message["role"] == "assistant" else "user"
         with st.chat_message(role):
@@ -368,9 +373,18 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
             )
         db.create_message(chat["id"], "assistant", assistant_reply)
         db.touch_chat(chat["id"])
+        st.rerun()
     except Exception as error:
-        st.error(f"Claude request failed: {error}")
-    finally:
+        db.create_message(
+            chat["id"],
+            "assistant",
+            (
+                "I could not generate a response right now. "
+                "Please check your Anthropic API key, model access, and deployment secrets."
+            ),
+        )
+        db.touch_chat(chat["id"])
+        st.session_state["chat_error"] = f"Claude request failed: {error}"
         st.rerun()
 
 

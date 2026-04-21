@@ -48,5 +48,5 @@ def get_settings() -> Settings:
             "development-jwt-secret-change-me-before-deploy",
         ),
         encryption_master_key=master_key,
-        anthropic_model=read_setting("ANTHROPIC_MODEL", "claude-3-5-sonnet-20240620"),
+        anthropic_model=read_setting("ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
     )
