@@ -1,3 +1,4 @@
+from __future__ import annotations
 import base64
 import os
 from typing import NamedTuple
@@ -29,6 +30,7 @@ class Settings(NamedTuple):
     database_path: str
     jwt_secret: str
     encryption_master_key: str
+    perplexity_model: str
     anthropic_model: str
 
 
@@ -45,5 +47,6 @@ def get_settings() -> Settings:
             "development-jwt-secret-change-me-before-deploy",
         ),
         encryption_master_key=master_key,
-        anthropic_model=read_setting("ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
+        perplexity_model=read_setting("PERPLEXITY_MODEL", "sonar"),
+        anthropic_model=read_setting("ANTHROPIC_MODEL", "claude-3-sonnet-20240229"),
     )

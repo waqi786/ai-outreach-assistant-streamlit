@@ -33,6 +33,7 @@ class Database:
                     email TEXT UNIQUE NOT NULL,
                     password_hash TEXT NOT NULL,
                     encrypted_api_key TEXT,
+                    api_provider TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 );
@@ -66,6 +67,13 @@ class Database:
                 );
                 """
             )
+
+            # Migration for existing databases that might not have the api_provider column
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN api_provider TEXT")
+            except sqlite3.OperationalError:
+                # Column already exists
+                pass
 
     def _now(self) -> str:
         return datetime.now(timezone.utc).isoformat()
@@ -102,15 +110,15 @@ class Database:
             row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
             return self._row_to_dict(row)
 
-    def update_user_api_key(self, user_id: str, encrypted_api_key: str | None) -> None:
+    def update_user_api_key(self, user_id: str, encrypted_api_key: str | None, api_provider: str | None) -> None:
         with self.connection() as conn:
             conn.execute(
                 """
                 UPDATE users
-                SET encrypted_api_key = ?, updated_at = ?
+                SET encrypted_api_key = ?, api_provider = ?, updated_at = ?
                 WHERE id = ?
                 """,
-                (encrypted_api_key, self._now(), user_id),
+                (encrypted_api_key, api_provider, self._now(), user_id),
             )
 
     def create_project(self, user_id: str, name: str, system_prompt: str) -> dict[str, Any]:

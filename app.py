@@ -7,7 +7,35 @@ import extra_streamlit_components as stx
 import jwt
 import streamlit as st
 
+# Guard against missing dependencies to provide clear user instructions
+def check_dependencies():
+    missing = []
+    try:
+        import openai
+    except ImportError:
+        missing.append("openai")
+    try:
+        import anthropic
+    except ImportError:
+        missing.append("anthropic")
+    
+    if missing:
+        st.error(f"### ⚠️ Missing Required Libraries: {', '.join(missing)}")
+        st.info("The application cannot start correctly without these libraries.")
+        cmds = "\n".join([f"pip install {lib}" for lib in missing])
+        st.markdown(f"""
+        To fix this, please run these commands in your terminal:
+        ```bash
+        {cmds}
+        ```
+        Then, refresh this page or restart the app.
+        """)
+        st.stop()
+
+check_dependencies()
+
 from streamlit_src.claude import ClaudeService
+from streamlit_src.perplexity import PerplexityService
 from streamlit_src.config import get_settings
 from streamlit_src.database import Database
 from streamlit_src.security import (
@@ -27,7 +55,8 @@ st.set_page_config(
 settings = get_settings()
 db = Database(settings.database_path)
 db.initialize()
-claude_service = ClaudeService(model=settings.anthropic_model)
+
+PROVIDERS = {"Perplexity": "perplexity", "Anthropic (Claude)": "anthropic"}
 
 
 cookie_manager = stx.CookieManager()
@@ -105,7 +134,7 @@ def ensure_project_selection(user_id: str) -> list[dict[str, Any]]:
 
 def render_auth_screen() -> None:
     st.title("AI Outreach Assistant")
-    st.caption("Secure, project-based Claude workspace for outreach campaigns.")
+    st.caption("Secure, project-based AI workspace for outreach campaigns.")
 
     login_tab, register_tab = st.tabs(["Login", "Register"])
 
@@ -221,7 +250,7 @@ def render_dashboard(user: dict[str, Any], projects: list[dict[str, Any]]) -> No
     header_col, stats_col = st.columns([2, 1])
     with header_col:
       st.title("AI Outreach Assistant")
-      st.caption("One account, one encrypted Anthropic key, multiple AI outreach projects.")
+      st.caption("One account, one encrypted API key, multiple AI outreach projects.")
     with stats_col:
       st.metric("Projects", len(projects))
       st.metric(
@@ -278,26 +307,40 @@ def render_project_settings(user: dict[str, Any], project: dict[str, Any]) -> No
 
 def render_user_settings(user: dict[str, Any]) -> None:
     st.subheader("User settings")
-    st.caption("Your Anthropic API key is encrypted before it is stored in SQLite.")
+    st.caption("Your API key is encrypted before it is stored in SQLite.")
+
+    current_provider = user.get("api_provider", "perplexity")
+    
+    # Find the display name for the current provider
+    provider_index = 0
+    provider_list = list(PROVIDERS.values())
+    if current_provider in provider_list:
+        provider_index = provider_list.index(current_provider)
 
     placeholder = (
         "A key is already saved. Paste a new one to replace it."
         if user.get("encrypted_api_key")
-        else "sk-ant-api03-..."
+        else "Paste your key here..."
     )
 
     with st.form("api_key_form"):
-        api_key = st.text_input("Anthropic API key", type="password", placeholder=placeholder)
+        selected_provider_name = st.selectbox(
+            "Select API Provider", 
+            options=list(PROVIDERS.keys()),
+            index=provider_index
+        )
+        api_key = st.text_input("API key", type="password", placeholder=placeholder)
         submitted = st.form_submit_button("Save API key")
 
     if submitted:
+        provider_val = PROVIDERS[selected_provider_name]
         if not api_key.strip():
             st.error("Please enter a valid API key.")
         else:
             try:
                 clean_api_key = sanitize_api_key(api_key)
                 encrypted = encrypt_api_key(clean_api_key, settings.encryption_master_key)
-                db.update_user_api_key(user["id"], encrypted)
+                db.update_user_api_key(user["id"], encrypted, provider_val)
                 st.session_state["user"] = db.get_user_by_id(user["id"])
                 st.success("API key saved securely.")
             except ValueError as error:
@@ -305,7 +348,7 @@ def render_user_settings(user: dict[str, Any]) -> None:
 
     if user.get("encrypted_api_key"):
         if st.button("Delete saved API key"):
-            db.update_user_api_key(user["id"], None)
+            db.update_user_api_key(user["id"], None, None)
             st.session_state["user"] = db.get_user_by_id(user["id"])
             st.success("API key deleted.")
             st.rerun()
@@ -355,12 +398,12 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
         with st.chat_message(role):
             st.markdown(message["content"])
 
-    user_input = st.chat_input("Describe the outreach scenario you want Claude to handle...")
+    user_input = st.chat_input("Describe the outreach scenario you want the AI to handle...")
     if not user_input:
         return
 
     if not user.get("encrypted_api_key"):
-        st.error("Please save your Anthropic API key in User Settings before sending messages.")
+        st.error("Please save an API key in User Settings before sending messages.")
         return
 
     try:
@@ -369,7 +412,7 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
     except ValueError:
         st.error(
             "Your saved API key appears to be invalid or was pasted with unsupported characters. "
-            "Please go to User Settings, delete it, and save the exact Anthropic key again."
+            "Please go to User Settings, delete it, and save the exact key again."
         )
         return
 
@@ -379,8 +422,17 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
     history = db.list_recent_messages(chat["id"], limit=10)
 
     try:
-        with st.spinner("Claude is writing your outreach message..."):
-            assistant_reply = claude_service.generate_response(
+        provider = user.get("api_provider", "perplexity")
+        
+        if provider == "anthropic":
+            from streamlit_src.claude import ClaudeService
+            service = ClaudeService(model=settings.anthropic_model)
+        else:
+            from streamlit_src.perplexity import PerplexityService
+            service = PerplexityService(model=settings.perplexity_model)
+
+        with st.spinner("AI is writing your outreach message..."):
+            assistant_reply = service.generate_response(
                 api_key=api_key,
                 system_prompt=project["system_prompt"],
                 history=history[:-1],
@@ -395,11 +447,11 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
             "assistant",
             (
                 "I could not generate a response right now. "
-                "Please check your Anthropic API key, model access, and deployment secrets."
+                "Please check your API key, provider selection, and model access."
             ),
         )
         db.touch_chat(chat["id"])
-        st.session_state["chat_error"] = f"Claude request failed: {error}"
+        st.session_state["chat_error"] = f"Request failed: {error}"
         st.rerun()
 
 

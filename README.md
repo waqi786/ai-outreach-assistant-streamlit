@@ -1,20 +1,20 @@
-# AI Outreach Assistant for Streamlit
+# AI Outreach Assistant (Perplexity Edition)
 
 Streamlit-based rebuild of the AI Outreach Assistant. This version keeps the same core product behavior in a single Python app:
 
 - User registration and login
-- One global Anthropic API key per user
+- One global Perplexity API key per user
 - Encrypted API key storage with AES-256-GCM
 - Multiple projects per user
 - Custom system prompt per project
 - Persistent chat history in SQLite
-- Claude responses built from system prompt + recent chat history + latest user input
+- Perplexity responses built from system prompt + recent chat history + latest user input
 
 ## Stack
 
 - Streamlit
 - SQLite
-- Anthropic Python SDK
+- OpenAI SDK (Perplexity Compatible)
 - PyJWT
 - `cryptography` for AES-256-GCM
 - `bcrypt` for password hashing
@@ -30,7 +30,7 @@ Streamlit-based rebuild of the AI Outreach Assistant. This version keeps the sam
 │   └── config.toml
 └── streamlit_src/
     ├── __init__.py
-    ├── claude.py
+    ├── perplexity.py
     ├── config.py
     ├── database.py
     └── security.py
@@ -46,7 +46,7 @@ Streamlit-based rebuild of the AI Outreach Assistant. This version keeps the sam
 
 ### Global API Key
 
-- User saves Anthropic API key once
+- User saves Perplexity API key once
 - API key is encrypted before database storage
 - Same saved key is used across all projects
 
@@ -58,7 +58,7 @@ Streamlit-based rebuild of the AI Outreach Assistant. This version keeps the sam
 
 ### AI Request Structure
 
-Each Claude request includes:
+Each Perplexity request includes:
 
 - Project system prompt
 - Recent chat history
@@ -112,7 +112,7 @@ Copy `.env.example` to `.env` and set your values.
 DATABASE_PATH=ai_outreach.db
 JWT_SECRET=change-this-before-deploy
 ENCRYPTION_MASTER_KEY=base64-encoded-32-byte-key
-ANTHROPIC_MODEL=claude-sonnet-4-20250514
+PERPLEXITY_MODEL=sonar
 ```
 
 To generate a key:
@@ -148,7 +148,7 @@ In app settings, add:
 ```toml
 JWT_SECRET = "change-this-before-deploy"
 ENCRYPTION_MASTER_KEY = "base64-encoded-32-byte-key"
-ANTHROPIC_MODEL = "claude-sonnet-4-20250514"
+PERPLEXITY_MODEL = "sonar"
 DATABASE_PATH = "ai_outreach.db"
 ```
 
@@ -158,4 +158,4 @@ This app uses SQLite for persistence. On Streamlit Cloud, local file storage can
 
 ## What This App Solves
 
-This is a project-based AI outreach system where each project behaves like its own assistant. The user controls the system prompt, while the app dynamically injects user input and recent conversation context at runtime to produce outreach-ready Claude responses.
+This is a project-based AI outreach system where each project behaves like its own assistant. The user controls the system prompt, while the app dynamically injects user input and recent conversation context at runtime to produce outreach-ready AI responses.
