@@ -36,7 +36,7 @@ def sanitize_api_key(raw_key: str) -> str:
         compact.encode("ascii")
     except UnicodeEncodeError as error:
         raise ValueError(
-            "API key contains unsupported non-ASCII characters. Please paste the exact Perplexity key again."
+            "API key contains unsupported non-ASCII characters. Please paste the exact key again."
         ) from error
 
     return compact

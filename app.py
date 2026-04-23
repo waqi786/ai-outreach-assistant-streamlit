@@ -8,34 +8,8 @@ import jwt
 import streamlit as st
 
 # Guard against missing dependencies to provide clear user instructions
-def check_dependencies():
-    missing = []
-    try:
-        import openai
-    except ImportError:
-        missing.append("openai")
-    try:
-        import anthropic
-    except ImportError:
-        missing.append("anthropic")
-    
-    if missing:
-        st.error(f"### ⚠️ Missing Required Libraries: {', '.join(missing)}")
-        st.info("The application cannot start correctly without these libraries.")
-        cmds = "\n".join([f"pip install {lib}" for lib in missing])
-        st.markdown(f"""
-        To fix this, please run these commands in your terminal:
-        ```bash
-        {cmds}
-        ```
-        Then, refresh this page or restart the app.
-        """)
-        st.stop()
+# Dependencies are now checked lazily when a specific AI provider is called.
 
-check_dependencies()
-
-from streamlit_src.claude import ClaudeService
-from streamlit_src.perplexity import PerplexityService
 from streamlit_src.config import get_settings
 from streamlit_src.database import Database
 from streamlit_src.security import (
@@ -309,7 +283,7 @@ def render_user_settings(user: dict[str, Any]) -> None:
     st.subheader("User settings")
     st.caption("Your API key is encrypted before it is stored in SQLite.")
 
-    current_provider = user.get("api_provider", "perplexity")
+    current_provider = user.get("api_provider") or "perplexity"
     
     # Find the display name for the current provider
     provider_index = 0
@@ -422,14 +396,22 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
     history = db.list_recent_messages(chat["id"], limit=10)
 
     try:
-        provider = user.get("api_provider", "perplexity")
+        provider = user.get("api_provider") or "perplexity"
         
         if provider == "anthropic":
-            from streamlit_src.claude import ClaudeService
-            service = ClaudeService(model=settings.anthropic_model)
+            try:
+                from streamlit_src.claude import ClaudeService
+                service = ClaudeService(model=settings.anthropic_model)
+            except ImportError:
+                st.error("The `anthropic` library is not installed. Please run `pip install anthropic` to use Claude.")
+                return
         else:
-            from streamlit_src.perplexity import PerplexityService
-            service = PerplexityService(model=settings.perplexity_model)
+            try:
+                from streamlit_src.perplexity import PerplexityService
+                service = PerplexityService(model=settings.perplexity_model)
+            except ImportError:
+                st.error("The `openai` library is not installed. Please run `pip install openai` to use Perplexity.")
+                return
 
         with st.spinner("AI is writing your outreach message..."):
             assistant_reply = service.generate_response(

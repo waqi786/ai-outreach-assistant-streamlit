@@ -87,14 +87,15 @@ class Database:
             "email": email,
             "password_hash": password_hash,
             "encrypted_api_key": None,
+            "api_provider": "perplexity",
             "created_at": self._now(),
             "updated_at": self._now(),
         }
         with self.connection() as conn:
             conn.execute(
                 """
-                INSERT INTO users (id, email, password_hash, encrypted_api_key, created_at, updated_at)
-                VALUES (:id, :email, :password_hash, :encrypted_api_key, :created_at, :updated_at)
+                INSERT INTO users (id, email, password_hash, encrypted_api_key, api_provider, created_at, updated_at)
+                VALUES (:id, :email, :password_hash, :encrypted_api_key, :api_provider, :created_at, :updated_at)
                 """,
                 user,
             )
