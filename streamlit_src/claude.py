@@ -16,6 +16,7 @@ class ClaudeService:
         system_prompt: str,
         history: list[dict[str, Any]],
         user_input: str,
+        temperature: float = 0.45,
     ) -> str:
         client = Anthropic(api_key=api_key)
         
@@ -37,6 +38,7 @@ class ClaudeService:
         response = client.messages.create(
             model=self.model,
             max_tokens=1024,
+            temperature=temperature,
             system=system_prompt,
             messages=clean_history,
         )

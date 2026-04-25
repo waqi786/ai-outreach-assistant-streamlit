@@ -639,11 +639,89 @@ db = Database(settings.database_path)
 db.initialize()
 
 MODEL_OPTIONS = {
-    "perplexity": ["sonar", "sonar-pro", "sonar-reasoning"],
-    "anthropic": ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229", "claude-3-haiku-20240307"]
+    "perplexity": [
+        "sonar",
+        "sonar-pro",
+        "sonar-reasoning-pro",
+        "sonar-deep-research",
+    ],
+    "anthropic": [
+        "claude-3-5-sonnet-20240620",
+        "claude-3-5-opus-20240229",
+        "claude-3-5-haiku-20240307",
+        "claude-3-opus-20240229",
+        "claude-3-haiku-20240307",
+    ]
+}
+
+MODEL_PROMPT_HINTS = {
+    "sonar": (
+        "Use a fast, general-purpose response style. Keep answers concise, grounded, practical, "
+        "and easy to scan for outreach and messaging."
+    ),
+    "sonar-pro": (
+        "Use a polished and persuasive style with deeper analysis and a professional tone. "
+        "Emphasize strategy, impact, personalization, and clear next steps."
+    ),
+    "sonar-reasoning-pro": (
+        "Use strong reasoning and explicit decision criteria. Compare options, explain why the "
+        "recommended outreach approach works, and make the answer more analytical and evidence-driven."
+    ),
+    "sonar-deep-research": (
+        "Act like a research-heavy strategist. Deliver a fuller answer with deeper context, richer "
+        "insights, stronger synthesis, and more detailed rationale for outreach decisions."
+    ),
+    "claude-3-5-sonnet-20240620": (
+        "Use a nuanced, business-savvy tone with high creativity and polished communication. "
+        "Focus on outreach quality and thoughtful personalization."
+    ),
+    "claude-3-5-opus-20240229": (
+        "Use a confident executive-style tone with clear structure and persuasive messaging. "
+        "Keep the answer professional and focused for sales outreach."
+    ),
+    "claude-3-5-haiku-20240307": (
+        "Use a concise, elegant, and slightly creative tone. Keep the response short, poetic, "
+        "and memorable while still being actionable."
+    ),
+    "claude-3-opus-20240229": (
+        "Use the classic Claude Opus style with reliable clarity, factual structure, and strong tone."
+    ),
+    "claude-3-haiku-20240307": (
+        "Use a concise and poetic style with short lines, precise messaging, and memorable phrasing."
+    ),
+}
+
+MODEL_TEMPERATURES = {
+    "sonar": 0.35,
+    "sonar-pro": 0.55,
+    "sonar-reasoning-pro": 0.3,
+    "sonar-deep-research": 0.4,
+    "claude-3-5-sonnet-20240620": 0.4,
+    "claude-3-5-opus-20240229": 0.3,
+    "claude-3-5-haiku-20240307": 0.55,
+    "claude-3-opus-20240229": 0.35,
+    "claude-3-haiku-20240307": 0.5,
 }
 
 PROVIDERS = {"Perplexity": "perplexity", "Anthropic (Claude)": "anthropic"}
+
+LEGACY_MODEL_ALIASES = {
+    "perplexity": {
+        "sonar-mini": "sonar",
+        "sonar-reasoning": "sonar-reasoning-pro",
+        "sonar-pro-reasoning": "sonar-reasoning-pro",
+    }
+}
+
+
+def get_valid_model(provider: str, model: str | None) -> str:
+    available_models = MODEL_OPTIONS.get(provider, [])
+    resolved_model = LEGACY_MODEL_ALIASES.get(provider, {}).get(model or "", model)
+    if resolved_model in available_models:
+        return resolved_model
+    if available_models:
+        return available_models[0]
+    raise ValueError(f"No models configured for provider: {provider}")
 
 
 cookie_manager = stx.CookieManager()
@@ -717,7 +795,7 @@ def render_auth_screen() -> None:
     with col2:
         st.markdown("""
             <div class="auth-header">
-                <h1>🚀 AI Outreach</h1>
+                <h1>AI Outreach</h1>
                 <p>High-conversion outreach workflows with AI-powered campaign intelligence.</p>
             </div>
             <div class="ui-card" style="margin-bottom: 1.5rem;">
@@ -798,7 +876,7 @@ def render_auth_screen() -> None:
 
 
 def render_sidebar(user: dict[str, Any]) -> None:
-    st.sidebar.title("🚀 AI Outreach Assistant")
+    st.sidebar.title("AI Outreach Assistant")
     st.sidebar.caption(user["email"])
     
     # Navigation
@@ -1085,7 +1163,7 @@ def render_projects_page(user: dict[str, Any]) -> None:
 
 
 def render_deploy_page(user: dict[str, Any]) -> None:
-    st.header("🚀 Deploy Your AI Outreach Assistant")
+    st.header(" Deploy Your AI Outreach Assistant")
     st.write("Get your app live on the web with one-click deployment options. Choose from Streamlit Cloud, Vercel, or other platforms.")
 
     st.markdown("---")
@@ -1153,9 +1231,7 @@ def render_settings(user: dict[str, Any]) -> None:
     st.caption("Select your AI provider, save your API key, and start chatting.")
 
     current_provider = user.get("api_provider") or "perplexity"
-    current_model = user.get("preferred_model") or (
-        MODEL_OPTIONS["perplexity"][0] if current_provider == "perplexity" else MODEL_OPTIONS["anthropic"][0]
-    )
+    current_model = get_valid_model(current_provider, user.get("preferred_model"))
     
     # Find the display name for the current provider
     provider_index = 0
@@ -1239,7 +1315,7 @@ def render_settings(user: dict[str, Any]) -> None:
 
 
 def render_chat(user: dict[str, Any]) -> None:
-    st.title("🚀 AI Outreach Assistant")
+    st.title("AI Outreach Assistant")
     st.caption("Create polished outreach messages with your provider and model settings.")
 
     st.markdown("""
@@ -1288,7 +1364,7 @@ def render_chat(user: dict[str, Any]) -> None:
         if provider == "anthropic":
             try:
                 from streamlit_src.claude import ClaudeService
-                model_to_use = chosen_model or settings.anthropic_model
+                model_to_use = get_valid_model("anthropic", chosen_model or settings.anthropic_model)
                 service = ClaudeService(model=model_to_use)
             except ImportError:
                 st.error("The `anthropic` library is not installed. Please run `pip install anthropic` to use Claude.")
@@ -1296,7 +1372,7 @@ def render_chat(user: dict[str, Any]) -> None:
         else:
             try:
                 from streamlit_src.perplexity import PerplexityService
-                model_to_use = chosen_model or settings.perplexity_model
+                model_to_use = get_valid_model("perplexity", chosen_model or settings.perplexity_model)
                 service = PerplexityService(model=model_to_use)
             except ImportError:
                 st.error("The `openai` library is not installed. Please run `pip install openai` to use Perplexity.")
@@ -1304,7 +1380,7 @@ def render_chat(user: dict[str, Any]) -> None:
 
         with st.spinner("AI is writing your outreach message..."):
             # Use a default system prompt since no projects
-            system_prompt = (
+            base_prompt = (
                 "You are a Strategic Outreach Expert with deep research capabilities.\n"
                 "Your goal is to:\n"
                 "1. Analyze the user's request and conduct deep research into the target.\n"
@@ -1313,11 +1389,18 @@ def render_chat(user: dict[str, Any]) -> None:
                 "4. Keep the tone professional yet human (no corporate jargon).\n"
                 "5. Ensure a clear, low-friction Call to Action (CTA)."
             )
+            model_hint = MODEL_PROMPT_HINTS.get(model_to_use, "")
+            temperature = MODEL_TEMPERATURES.get(model_to_use, 0.45)
+            system_prompt = (
+                f"You are using {model_to_use}. Respond in a distinct style for this model.\n\n{base_prompt}\n\n{model_hint}"
+                if model_hint else f"You are using {model_to_use}. Respond in a distinct style for this model.\n\n{base_prompt}"
+            )
             assistant_reply = service.generate_response(
                 api_key=api_key,
                 system_prompt=system_prompt,
                 history=st.session_state.messages[:-1],  # Exclude the current user message
                 user_input=user_input.strip(),
+                temperature=temperature,
             )
         st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
         st.rerun()
@@ -1357,7 +1440,7 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
 
     inject_scroll_script()
     
-    st.title(f"🚀 {project['name']}")
+    st.title(f" {project['name']}")
 
     selected_chat_id = st.session_state.get("selected_chat_id")
     if not selected_chat_id:
@@ -1417,7 +1500,7 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
         if provider == "anthropic":
             try:
                 from streamlit_src.claude import ClaudeService
-                model_to_use = chosen_model or settings.anthropic_model
+                model_to_use = get_valid_model("anthropic", chosen_model or settings.anthropic_model)
                 service = ClaudeService(model=model_to_use)
             except ImportError:
                 st.error("The `anthropic` library is not installed. Please run `pip install anthropic` to use Claude.")
@@ -1425,18 +1508,25 @@ def render_chat_workspace(user: dict[str, Any], project: dict[str, Any] | None) 
         else:
             try:
                 from streamlit_src.perplexity import PerplexityService
-                model_to_use = chosen_model or settings.perplexity_model
+                model_to_use = get_valid_model("perplexity", chosen_model or settings.perplexity_model)
                 service = PerplexityService(model=model_to_use)
             except ImportError:
                 st.error("The `openai` library is not installed. Please run `pip install openai` to use Perplexity.")
                 return
 
         with st.spinner("AI is writing your outreach message..."):
+            model_hint = MODEL_PROMPT_HINTS.get(model_to_use, "")
+            temperature = MODEL_TEMPERATURES.get(model_to_use, 0.45)
+            system_prompt = (
+                f"You are using {model_to_use}. Respond in a distinct style for this model.\n\n{project['system_prompt']}\n\n{model_hint}"
+                if model_hint else f"You are using {model_to_use}. Respond in a distinct style for this model.\n\n{project['system_prompt']}"
+            )
             assistant_reply = service.generate_response(
                 api_key=api_key,
-                system_prompt=project["system_prompt"],
+                system_prompt=system_prompt,
                 history=history[:-1],
                 user_input=user_input.strip(),
+                temperature=temperature,
             )
         db.create_message(chat["id"], "assistant", assistant_reply)
         db.touch_chat(chat["id"])

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import re
 from typing import Any
 
 class PerplexityService:
@@ -10,7 +11,8 @@ class PerplexityService:
         api_key: str, 
         system_prompt: str, 
         history: list[dict[str, Any]], 
-        user_input: str
+        user_input: str,
+        temperature: float = 0.45,
     ) -> str:
         from openai import OpenAI
         client = OpenAI(api_key=api_key, base_url="https://api.perplexity.ai")
@@ -33,5 +35,18 @@ class PerplexityService:
             clean_history.pop(0)
 
         api_messages = [{"role": "system", "content": system_prompt}] + clean_history
-        response = client.chat.completions.create(model=self.model, messages=api_messages)
-        return response.choices[0].message.content
+        response = client.chat.completions.create(
+            model=self.model,
+            messages=api_messages,
+            temperature=temperature,
+        )
+        content = response.choices[0].message.content or ""
+        cleaned_content = self._strip_reasoning_blocks(content).strip()
+        if not cleaned_content:
+            raise RuntimeError("Perplexity returned an empty response.")
+        return cleaned_content
+
+    @staticmethod
+    def _strip_reasoning_blocks(content: str) -> str:
+        # Some reasoning-capable models may include visible thinking blocks.
+        return re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL | re.IGNORECASE)
