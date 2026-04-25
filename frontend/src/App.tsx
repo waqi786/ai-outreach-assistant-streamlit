@@ -22,7 +22,7 @@ function AppLayout() {
   }, [fetchProjects, isAuthenticated]);
 
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
+    <div className="flex min-h-screen flex-col lg:flex-row bg-gradient-to-br from-background via-background to-muted/10">
       <Sidebar />
       <main className="min-h-screen flex-1 overflow-hidden">
         <Outlet />

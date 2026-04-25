@@ -47,4 +47,8 @@ router.delete('/api-key', requireAuth, async (req: AuthenticatedRequest, res) =>
     return res.json({ message: 'API key deleted successfully.', hasApiKey: false });
   } catch (error) {
     console.error('Delete API key error', error);
-    return res.status(500).js
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+export default router;

@@ -18,17 +18,27 @@ class ClaudeService:
         user_input: str,
     ) -> str:
         client = Anthropic(api_key=api_key)
+        
+        # Ensure strict alternation for Claude's API
+        combined_messages = history + [{"role": "user", "content": user_input}]
+        clean_history = []
+        last_role = None
+        
+        for msg in combined_messages:
+            if msg["role"] != last_role:
+                clean_history.append({"role": msg["role"], "content": msg["content"]})
+                last_role = msg["role"]
+            else:
+                clean_history[-1]["content"] = (clean_history[-1].get("content", "") + "\n\n" + msg["content"]).strip()
+
+        if clean_history and clean_history[0]["role"] == "assistant":
+            clean_history.pop(0)
+
         response = client.messages.create(
             model=self.model,
             max_tokens=1024,
             system=system_prompt,
-            messages=[
-                *[
-                    {"role": message["role"], "content": message["content"]}
-                    for message in history
-                ],
-                {"role": "user", "content": user_input},
-            ],
+            messages=clean_history,
         )
 
         text_parts = [

@@ -12,10 +12,17 @@ dotenv.config();
 const app = express();
 const port = Number(process.env.PORT || 5000);
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+const allowedOrigins = [clientUrl, 'http://localhost:5174'];
 
 app.use(
   cors({
-    origin: clientUrl,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS policy blocked this origin.'));
+      }
+    },
     credentials: true,
   })
 );

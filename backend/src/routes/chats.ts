@@ -13,6 +13,10 @@ const createChatSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
 });
 
+const updateChatSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+});
+
 const sendMessageSchema = z.object({
   content: z.string().trim().min(1).max(10000),
 });
@@ -127,6 +131,40 @@ router.get('/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
   }
 });
 
+router.put('/:id', requireAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const { title } = updateChatSchema.parse(req.body);
+
+    const chat = await prisma.chat.findUnique({
+      where: { id },
+      include: {
+        project: {
+          select: { userId: true },
+        },
+      },
+    });
+
+    if (!chat || chat.project.userId !== req.userId) {
+      return res.status(404).json({ error: 'Chat not found.' });
+    }
+
+    const updatedChat = await prisma.chat.update({
+      where: { id },
+      data: { title },
+    });
+
+    return res.json(updatedChat);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return sendValidationError(res, error);
+    }
+
+    console.error('Update chat error', error);
+    return res.status(500).json({ error: 'Unable to update chat.' });
+  }
+});
+
 router.post('/:id/messages', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = idSchema.parse(req.params);
@@ -225,4 +263,12 @@ router.post('/:id/messages', requireAuth, async (req: AuthenticatedRequest, res)
       assistantMessage,
     });
   } catch (error) {
-    if (error instan
+    if (error instanceof ZodError) {
+      return res.status(400).json({ error: error.errors });
+    }
+    console.error('Error creating message:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+export default router;

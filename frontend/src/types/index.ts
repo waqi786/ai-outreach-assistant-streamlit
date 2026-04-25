@@ -2,6 +2,8 @@ export interface AuthUser {
   id: string;
   email: string;
   hasApiKey: boolean;
+  apiProvider?: 'claude' | 'perplexity';
+  apiModel?: string;
 }
 
 export interface LoginPayload {

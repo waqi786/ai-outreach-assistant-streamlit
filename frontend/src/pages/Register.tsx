@@ -41,46 +41,48 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Create account</CardTitle>
-          <CardDescription>Set up a secure workspace for your projects and Anthropic API key.</CardDescription>
+    <div className="flex min-h-screen items-center justify-center p-8 bg-gradient-to-br from-background via-accent/5 to-primary/10">
+      <Card className="w-full max-w-md shadow-card animate-fade-up">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl">Create account</CardTitle>
+          <CardDescription className="text-base mt-2">Set up a secure workspace for your projects and Anthropic API key.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+        <CardContent className="space-y-6">
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <div className="space-y-3">
+              <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
+              <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required className="h-12" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="space-y-3">
+              <Label htmlFor="password" className="text-sm font-semibold">Password</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
+                className="h-12"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm password</Label>
+            <div className="space-y-3">
+              <Label htmlFor="confirmPassword" className="text-sm font-semibold">Confirm password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 required
+                className="h-12"
               />
             </div>
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            <Button type="submit" className="w-full" disabled={submitting}>
+            {error ? <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-xl p-3">{error}</p> : null}
+            <Button type="submit" className="w-full h-12 text-base" disabled={submitting}>
               Register
             </Button>
           </form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link className="font-medium text-primary hover:underline" to="/login">
+            <Link className="font-semibold text-primary hover:text-primary/80 transition-colors" to="/login">
               Log in
             </Link>
           </p>

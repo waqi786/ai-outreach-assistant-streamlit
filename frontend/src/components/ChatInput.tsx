@@ -23,18 +23,18 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <form className="sticky bottom-0 mt-auto space-y-3 rounded-3xl border bg-card/90 p-4 shadow-panel" onSubmit={handleSubmit}>
+    <form className="space-y-4 rounded-2xl border border-border bg-card/95 backdrop-blur-sm p-6 shadow-card" onSubmit={handleSubmit}>
       <Textarea
         placeholder="Type your outreach request, follow-up, or prompt..."
         value={value}
         onChange={(event) => setValue(event.target.value)}
         disabled={disabled}
-        className="min-h-[96px] resize-none"
+        className="min-h-[120px] text-base"
       />
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">The assistant uses this project's system prompt and recent messages.</p>
-        <Button type="submit" disabled={disabled || !value.trim()}>
-          <SendHorizonal className="h-4 w-4" />
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-muted-foreground">The assistant uses this project's system prompt and recent messages.</p>
+        <Button type="submit" disabled={disabled || !value.trim()} size="lg" className="px-8">
+          <SendHorizonal className="h-5 w-5" />
           Send
         </Button>
       </div>

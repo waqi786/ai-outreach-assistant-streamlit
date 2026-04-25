@@ -1,28 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: 40 33% 97%;
-  --foreground: 212 34% 16%;
-  --card: 0 0% 100%;
-  --card-foreground: 212 34% 16%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 212 34% 16%;
-  --primary: 202 72% 32%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 35 70% 92%;
-  --secondary-foreground: 212 34% 16%;
-  --muted: 32 28% 92%;
-  --muted-foreground: 212 18% 42%;
-  --accent: 21 84% 90%;
-  --accent-foreground: 212 34% 16%;
+  --background: 222 47% 11%;
+  --foreground: 0 0% 98%;
+  --card: 222 47% 15%;
+  --card-foreground: 0 0% 98%;
+  --popover: 222 47% 15%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 195 100% 50%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 217 19% 20%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 217 19% 15%;
+  --muted-foreground: 215 14% 34%;
+  --accent: 195 100% 50%;
+  --accent-foreground: 222 47% 11%;
   --destructive: 0 72% 52%;
   --destructive-foreground: 0 0% 100%;
-  --border: 28 24% 84%;
-  --input: 28 24% 84%;
-  --ring: 202 72% 32%;
-  --radius: 1rem;
+  --border: 217 19% 20%;
+  --input: 217 19% 20%;
+  --ring: 195 100% 50%;
+  --radius: 0.75rem;
 }
 
 * {
@@ -31,10 +32,7 @@
 
 body {
   @apply min-h-screen bg-background font-sans text-foreground antialiased;
-  background-image:
-    radial-gradient(circle at top left, rgba(243, 187, 91, 0.22), transparent 25%),
-    radial-gradient(circle at bottom right, rgba(53, 124, 165, 0.18), transparent 30%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(248, 243, 235, 0.95));
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 #root {
@@ -42,11 +40,61 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(108, 126, 138, 0.4);
-  border-radius: 999px;
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.3);
+  color: hsl(var(--primary-foreground));
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out;
+}
+
+.shadow-card {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.shadow-button {
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

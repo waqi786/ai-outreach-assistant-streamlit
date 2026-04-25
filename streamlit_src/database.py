@@ -34,6 +34,7 @@ class Database:
                     password_hash TEXT NOT NULL,
                     encrypted_api_key TEXT,
                     api_provider TEXT,
+                    preferred_model TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 );
@@ -74,6 +75,12 @@ class Database:
             except sqlite3.OperationalError:
                 # Column already exists
                 pass
+                
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN preferred_model TEXT")
+            except sqlite3.OperationalError:
+                # Column already exists
+                pass
 
     def _now(self) -> str:
         return datetime.now(timezone.utc).isoformat()
@@ -88,6 +95,7 @@ class Database:
             "password_hash": password_hash,
             "encrypted_api_key": None,
             "api_provider": "perplexity",
+            "preferred_model": "sonar",
             "created_at": self._now(),
             "updated_at": self._now(),
         }
@@ -111,15 +119,15 @@ class Database:
             row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
             return self._row_to_dict(row)
 
-    def update_user_api_key(self, user_id: str, encrypted_api_key: str | None, api_provider: str | None) -> None:
+    def update_user_api_key(self, user_id: str, encrypted_api_key: str | None, api_provider: str | None, preferred_model: str | None = None) -> None:
         with self.connection() as conn:
             conn.execute(
                 """
                 UPDATE users
-                SET encrypted_api_key = ?, api_provider = ?, updated_at = ?
+                SET encrypted_api_key = ?, api_provider = ?, preferred_model = ?, updated_at = ?
                 WHERE id = ?
                 """,
-                (encrypted_api_key, api_provider, self._now(), user_id),
+                (encrypted_api_key, api_provider, preferred_model, self._now(), user_id),
             )
 
     def create_project(self, user_id: str, name: str, system_prompt: str) -> dict[str, Any]:

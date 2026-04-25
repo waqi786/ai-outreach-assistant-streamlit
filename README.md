@@ -3,18 +3,19 @@
 Streamlit-based rebuild of the AI Outreach Assistant. This version keeps the same core product behavior in a single Python app:
 
 - User registration and login
-- One global Perplexity API key per user
+- One global provider API key per user (Perplexity or Anthropic/Claude)
 - Encrypted API key storage with AES-256-GCM
 - Multiple projects per user
 - Custom system prompt per project
 - Persistent chat history in SQLite
-- Perplexity responses built from system prompt + recent chat history + latest user input
+- AI responses built from system prompt + recent chat history + latest user input
 
 ## Stack
 
 - Streamlit
 - SQLite
 - OpenAI SDK (Perplexity Compatible)
+- Anthropic SDK support for Claude
 - PyJWT
 - `cryptography` for AES-256-GCM
 - `bcrypt` for password hashing
@@ -113,6 +114,7 @@ DATABASE_PATH=ai_outreach.db
 JWT_SECRET=change-this-before-deploy
 ENCRYPTION_MASTER_KEY=base64-encoded-32-byte-key
 PERPLEXITY_MODEL=sonar
+ANTHROPIC_MODEL=claude-3-5-sonnet-20240620
 ```
 
 To generate a key:
@@ -135,22 +137,32 @@ Open:
 
 ### 1. Push repo to GitHub
 
+Commit this repo and push it to GitHub. The current configured remote is:
+
+`https://github.com/waqi786/ai-outreach-assistant-streamlit`
+
 ### 2. On Streamlit Community Cloud
 
 - Create a new app
-- Select repo
-- Main file path: `app.py`
+- Connect your GitHub repository
+- Set the main file path to `app.py`
+- Use Python 3.12 or later
 
 ### 3. Add secrets in Streamlit Cloud
 
-In app settings, add:
+In the app settings, add:
 
 ```toml
 JWT_SECRET = "change-this-before-deploy"
 ENCRYPTION_MASTER_KEY = "base64-encoded-32-byte-key"
 PERPLEXITY_MODEL = "sonar"
+ANTHROPIC_MODEL = "claude-3-5-sonnet-20240620"
 DATABASE_PATH = "ai_outreach.db"
 ```
+
+### 4. Optional GitHub Actions validation
+
+This repository includes a GitHub Actions workflow to validate Python imports and ensure the app compiles cleanly on push.
 
 ## Important Deployment Note
 
